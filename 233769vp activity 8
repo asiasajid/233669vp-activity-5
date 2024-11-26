@@ -1,0 +1,105 @@
+using System;
+using System.Data;
+using System.Data.SqlClient;
+using System.Windows.Forms;
+using System.Configuration;
+
+namespace CustomerDataEntry
+{
+    public partial class frmCustomerDataEntry : Form
+    {
+        public frmCustomerDataEntry()
+        {
+            InitializeComponent();
+        }
+
+        private void frmCustomerDataEntry_Load(object sender, EventArgs e)
+        {
+            loadCustomer();
+        }
+
+        private void loadCustomer()
+        {
+            string connectionString = ConfigurationManager.ConnectionStrings["DBConn"].ConnectionString;
+            using (SqlConnection objConnection = new SqlConnection(connectionString))
+            {
+                objConnection.Open();
+                string strCommand = "SELECT * FROM CustomerTable";
+                SqlCommand objCommand = new SqlCommand(strCommand, objConnection);
+                DataSet objDataSet = new DataSet();
+                SqlDataAdapter objAdapter = new SqlDataAdapter(objCommand);
+                objAdapter.Fill(objDataSet);
+                dtgCustomer.DataSource = objDataSet.Tables[0];
+            }
+        }
+
+        private void dtgCustomer_CellClick(object sender, DataGridViewCellEventArgs e)
+        {
+            clearForm();
+            if (e.RowIndex >= 0) // Ensure the row index is valid
+            {
+                string customerName = dtgCustomer.Rows[e.RowIndex].Cells[0].Value.ToString();
+                displayCustomer(customerName);
+            }
+        }
+
+        private void clearForm()
+        {
+            txtName.Text = "";
+            cmbCountry.Text = "";
+            radioMale.Checked = false;
+            radioFemale.Checked = false;
+            chkPainting.Checked = false;
+            chkReading.Checked = false;
+            radioMarried.Checked = false;
+            radioUnmarried.Checked = false;
+        }
+
+        private void displayCustomer(string customerName)
+        {
+            string strConnection = ConfigurationManager.ConnectionStrings["DBConn"].ConnectionString;
+            using (SqlConnection objConnection = new SqlConnection(strConnection))
+            {
+                objConnection.Open();
+                string strCommand = "SELECT * FROM CustomerTable WHERE CustomerName = @CustomerName";
+                using (SqlCommand objCommand = new SqlCommand(strCommand, objConnection))
+                {
+                    objCommand.Parameters.AddWithValue("@CustomerName", customerName);
+                    DataSet objDataSet = new DataSet();
+                    SqlDataAdapter objAdapter = new SqlDataAdapter(objCommand);
+                    objAdapter.Fill(objDataSet);
+
+                    if (objDataSet.Tables[0].Rows.Count > 0) // Check if any data is returned
+                    {
+                        txtName.Text = objDataSet.Tables[0].Rows[0]["CustomerName"].ToString();
+                        cmbCountry.Text = objDataSet.Tables[0].Rows[0]["Country"].ToString();
+
+                        string gender = objDataSet.Tables[0].Rows[0]["Gender"].ToString();
+                        if (gender.Equals("Male")) radioMale.Checked = true;
+                        else radioFemale.Checked = true;
+
+                        string hobby = objDataSet.Tables[0].Rows[0]["Hobby"].ToString();
+                        if (hobby.Equals("Reading")) chkReading.Checked = true;
+                        else chkPainting.Checked = true;
+
+                        string status = objDataSet.Tables[0].Rows[0]["Status"].ToString();
+                        if (status.Equals("1")) radioMarried.Checked = true;
+                        else radioUnmarried.Checked = true;
+                    }
+                }
+            }
+        }
+
+        private void btnUpdate_Click(object sender, EventArgs e)
+        {
+            string gender = radioMale.Checked ? "Male" : "Female";
+            string hobby = chkReading.Checked ? "Reading" : "Painting";
+            string status = radioMarried.Checked ? "1" : "0";
+
+            string strConnection = ConfigurationManager.ConnectionStrings["DBConn"].ConnectionString;
+            using (SqlConnection objConnection = new SqlConnection(strConnection))
+            {
+                try
+                {
+                    objConnection.Open();
+                    string strCommand = "UPDATE CustomerTable SET Country = @Country, Gender = @Gender, Hobby = @Hobby, Status = @Status WHERE CustomerName = @CustomerName ⬤
