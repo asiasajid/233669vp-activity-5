@@ -1,0 +1,112 @@
+using System;
+using System.Data;
+using System.Windows.Forms;
+using DataAccess; // Add the DataAccess namespace
+
+namespace CustomerDataEntry
+{
+    public partial class frmCustomerDataEntry : Form
+    {
+        public frmCustomerDataEntry()
+        {
+            InitializeComponent();
+        }
+
+        private void frmCustomerDataEntry_Load(object sender, EventArgs e)
+        {
+            loadCustomer();
+        }
+
+        private void loadCustomer()
+        {
+            clsSqlServer obj = new clsSqlServer(); // Create an instance of clsSqlServer
+            DataSet ds = obj.getCustomerData(); // Get all data from the database
+            dtgCustomer.DataSource = ds.Tables[0]; // Set the DataSource of the DataGridView
+        }
+
+        private void dtgCustomer_CellClick(object sender, DataGridViewCellEventArgs e)
+        {
+            clearForm();
+            if (e.RowIndex >= 0) // Ensure the row index is valid
+            {
+                string customerName = dtgCustomer.Rows[e.RowIndex].Cells[0].Value.ToString();
+                displayCustomer(customerName);
+            }
+        }
+
+        private void clearForm()
+        {
+            txtName.Text = "";
+            cmbCountry.Text = "";
+            radioMale.Checked = false;
+            radioFemale.Checked = false;
+            chkPainting.Checked = false;
+            chkReading.Checked = false;
+            radioMarried.Checked = false;
+            radioUnmarried.Checked = false;
+        }
+
+        private void displayCustomer(string customerName)
+        {
+            clsSqlServer obj = new clsSqlServer(); // Create an instance of clsSqlServer
+            DataSet ds = obj.getCustomerData(); // Get all data from the database
+
+            foreach (DataRow row in ds.Tables[0].Rows)
+            {
+                if (row["CustomerName"].ToString() == customerName)
+                {
+                    txtName.Text = row["CustomerName"].ToString();
+                    cmbCountry.Text = row["Country"].ToString();
+
+                    string gender = row["Gender"].ToString();
+                    if (gender.Equals("Male")) radioMale.Checked = true;
+                    else radioFemale.Checked = true;
+
+                    string hobby = row["Hobby"].ToString();
+                    if (hobby.Equals("Reading")) chkReading.Checked = true;
+                    else chkPainting.Checked = true;
+
+                    string status = row["Status"].ToString();
+                    if (status.Equals("1")) radioMarried.Checked = true;
+                    else radioUnmarried.Checked = true;
+
+                    break; // Exit the loop once the customer is found
+                }
+            }
+        }
+
+        private void btnUpdate_Click(object sender, EventArgs e)
+        {
+            // Collect data from the form
+            string customerName = txtName.Text;
+            string country = cmbCountry.Text;
+            string gender = radioMale.Checked ? "Male" : "Female";
+            string hobby = chkReading.Checked ? "Reading" : "Painting";
+            string status = radioMarried.Checked ? "1" : "0";
+
+            // Create an instance of clsSqlServer
+            clsSqlServer obj = new clsSqlServer();
+            obj.UpdateCustomer(customerName, country, gender, hobby, status); // Call the update method
+
+            MessageBox.Show("Customer updated successfully!");
+            loadCustomer(); // Refresh the DataGridView
+        }
+
+        private void btnDelete_Click(object sender, EventArgs e)
+        {
+            if (string.IsNullOrWhiteSpace(txtName.Text))
+            {
+                MessageBox.Show("Please select a customer to delete.");
+                return;
+            }
+
+            // Create an instance of clsSqlServer
+            clsSqlServer obj = new clsSqlServer();
+            obj.DeleteCustomer(txtName.Text); // Call the delete method
+
+            MessageBox.Show("Customer deleted successfully!");
+            clearForm(); // Clear the form
+            loadCustomer(); // Refresh the DataGridView
+        }
+    }
+}
