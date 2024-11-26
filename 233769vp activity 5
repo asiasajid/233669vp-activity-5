@@ -1,0 +1,51 @@
+//233769
+
+using System;
+using System.Data;
+using System.Data.SqlClient;
+using System.Windows.Forms;
+
+namespace CustomerDataEntry
+{
+    public partial class frmCustomerDataEntry : Form
+    {
+        public frmCustomerDataEntry()
+        {
+            InitializeComponent(); // Initializes the form components
+        }
+
+        private void frmCustomerDataEntry_Load(object sender, EventArgs e)
+        {
+            loadCustomer(); // Load customer data when the form loads
+        }
+
+        private void loadCustomer()
+        {
+            // Define the connection string to connect to the SQL Server database
+            string strConnection = "Data Source=.\\sqlexpress;Initial Catalog=CustomerDB;Integrated Security=True";
+
+            // Create a new SqlConnection object with the connection string
+            using (SqlConnection objConnection = new SqlConnection(strConnection))
+            {
+                // Open the connection to the database
+                objConnection.Open();
+
+                // Define the SQL command to retrieve data from CustomerTable
+                string strCommand = "SELECT * FROM CustomerTable";
+
+                // Create a SqlCommand object
+                SqlCommand objCommand = new SqlCommand(strCommand, objConnection);
+
+                // Create a DataSet to hold the data
+                DataSet objDataSet = new DataSet();
+
+                // Use SqlDataAdapter to execute the command and fill the DataSet
+                SqlDataAdapter objAdapter = new SqlDataAdapter(objCommand);
+                objAdapter.Fill(objDataSet);
+
+                // Bind the first table in the DataSet to the DataGridView
+                dtgCustomer.DataSource = objDataSet.Tables[0];
+            }
+        }
+    }
+}
